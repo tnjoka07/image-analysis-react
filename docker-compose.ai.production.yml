@@ -1,0 +1,51 @@
+services:
+    ai:
+        build:
+            context: .
+            dockerfile: ./pathoai/ai/Dockerfile
+        ports:
+            - "80:9000"
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        volumes:
+            - ./pathoai/ai/app:/app:rw
+            - ./mainApi/app/static:/app/static
+            - ~/.cache/huggingface:/root/.cache/huggingface:rw
+        command: [ "sh", "/app/start.sh" ]
+        restart: always
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: all
+                          capabilities: [gpu]
+        runtime: nvidia
+    
+    denoise:
+        build:
+            context: .
+            dockerfile: ./denoise/Dockerfile
+        ports:
+            - "8000:8000"
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        volumes:
+            - ./denoise/app:/app:rw
+            - ./mainApi/bftools:/bftools
+            - ./mainApi/app/static:/app/static:rw
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "/app/start.sh" ]
+        restart: always
+        shm_size: '8gb'  # or '512mb', '2gb', etc.
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: all
+                          capabilities: [gpu]
+        runtime: nvidia
+

@@ -1,0 +1,25 @@
+services:
+    ai:
+        build:
+            context: .
+            dockerfile: ./lagApi/Dockerfile
+        ports:
+            - "8009:8009"
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        volumes:
+            - ./lagApi/app:/app:rw
+            - /mnt/NAS:/app/static
+            - ~/.cache/huggingface:/root/.cache/huggingface:rw
+        command: [ "sh", "/app/start.sh" ]
+        restart: always
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: all
+                          capabilities: [gpu]
+        runtime: nvidia
+

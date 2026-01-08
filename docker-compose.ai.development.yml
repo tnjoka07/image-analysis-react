@@ -1,0 +1,29 @@
+services:    
+    ai:
+        build:
+            context: .
+            dockerfile: ./pathoai/ai/Dockerfile
+        ports:
+            - 9000:9000
+            - 5500:5678 # debugging port
+        environment:
+            - ENVIRONMENT=development
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        volumes:
+            - ./pathoai/ai/app:/app:rw
+            - ./mainApi/app/static:/app/static
+            - ./letsencrypt:/etc/letsencrypt
+            - ~/.cache/huggingface:/root/.cache/huggingface:rw
+        command: [ "sh", "/app/start.sh" ]
+        restart: always
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: all
+                          capabilities: [gpu]
+        runtime: nvidia
+

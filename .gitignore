@@ -1,0 +1,171 @@
+.DS_Store
+Thumbs.db
+
+# temp & cache directory
+/tmp
+cache/
+test/*
+# react project
+node_modules/
+react/.env
+react/build
+# dist/
+static/
+# templates/
+# local env files
+.env.local
+.env.*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+blender/app/microscopynodes.zip
+blender/app/Obj2Tiles-Linux64.zip
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+Tumor*.pt
+
+### General configuration for Django ###
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+temp/
+# build/
+environment/
+# static/
+# build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# dotenv
+# .env.*
+!.env.sample
+
+# virtualenv
+.venv
+venv/
+myenv/
+ENV/
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+
+*.sqlite3
+# media/
+*.pyc
+*.db
+*.pid
+
+/martial
+/vue/.nvmrc
+/datasets/
+/_tmp/
+#*.sh
+test.py
+
+
+/celery_tasks
+/shared_utils
+storage-credential
+mainApi/app/images/h5_test/NEONDSImagingSpectrometerData.h5
+privkey.pem
+letsencrypt/
+pathoai/ai/app/trainer/merge_qwen2vl.json
+pathoai/ai/app/trainer/mllm_life.json
+pathoai/ai/app/trainer/train_qwen2vl.json
+denoise/app/checkpoints
+denoise/app/models
+denoise/app/csv_logs

@@ -1,0 +1,265 @@
+services:
+    mainapi:
+        build:
+            context: .
+            dockerfile: ./mainApi/Dockerfile
+        expose:
+            - "8000"
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        depends_on:
+            - mongo
+        volumes:
+            - image-storage:/image-storage
+            - cache-storage:/cache-storage
+            - ./mainApi:/app/mainApi:rw
+            # - ./docker_compose_libs/shared_utils:/app/shared_utils:rw
+            - ./docker_compose_shared/static:/app/shared_static:rw
+            - ./letsencrypt:/etc/letsencrypt
+            - ~/.cache/huggingface:/root/.cache/huggingface:rw
+        command: [ "sh", "./mainApi/start.sh" ]
+        restart: always
+        networks:
+            - ias-network
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: all
+                          capabilities: [gpu]
+        runtime: nvidia
+    instanseg:
+        build:
+            context: .
+            dockerfile: ./instanseg/Dockerfile
+        expose:
+            - "2000"
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        depends_on:
+            - mongo
+        volumes:
+            - image-storage:/image-storage
+            - cache-storage:/cache-storage
+            - ./instanseg/app:/app:rw
+            - ./mainApi/app/static:/app/static:rw
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "/app/start.sh" ]
+        restart: always
+        networks:
+            - ias-network
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: all
+                          capabilities: [gpu]
+        runtime: nvidia
+    cflowad:
+        build:
+            context: .
+            dockerfile: ./cflowAD/Dockerfile
+        expose:
+            - "1000"
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        depends_on:
+            - mongo
+        volumes:
+            - ./cflowAD/app:/app:rw
+            - ./mainApi/app/static:/app/static:rw
+            - ./mainApi/bftools:/bftools
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "/app/start.sh" ]
+        restart: always
+        networks:
+            - ias-network
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: all
+                          capabilities: [gpu]
+        runtime: nvidia
+    blender:
+        build:
+            context: .
+            dockerfile: ./blender/Dockerfile.opencvgpu
+        expose:
+            - "1235"
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        depends_on:
+            - mongo
+        volumes:
+            - ./blender/app:/app:rw
+            - ./mainApi/bftools:/bftools
+            - ./mainApi/app/static:/app/static:rw
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "/app/start.sh" ]
+        restart: always
+        networks:
+            - ias-network
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: all
+                          capabilities: [gpu]
+        runtime: nvidia
+    flowcal:
+        build:
+            context: .
+            dockerfile: ./flowcal/Dockerfile
+        expose:
+            - "8000"
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        depends_on:
+            - mongo
+        volumes:
+            - ./flowcal/app:/app:rw
+            - ./mainApi/app/static:/app/static:rw
+            - ./mainApi/bftools:/bftools
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "-c", "dos2unix /app/start.sh && /app/start.sh" ]
+        networks:
+            - ias-network
+        restart: always
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: all
+                          capabilities: [gpu]
+        runtime: nvidia
+    deepliff:
+        build:
+            context: .
+            dockerfile: ./deepliff/Dockerfile
+        expose:
+            - "7000"
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        depends_on:
+            - mongo
+        volumes:
+            - image-storage:/image-storage
+            - cache-storage:/cache-storage
+            - ./deepliff/app:/app:rw
+            - ./mainApi/app/static:/app/static:rw
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "/app/start.sh" ]
+        networks:
+            - ias-network
+        restart: always
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: all
+                          capabilities: [gpu]
+        runtime: nvidia
+    ilastikapi:
+        build:
+            context: .
+            dockerfile: ./ilastikApi/Dockerfile
+        expose:
+            - "8001"
+        env_file:
+            - ./env_files/fastApi.env
+        volumes:
+            - image-storage:/image-storage
+            - cache-storage:/cache-storage
+            - ./mainApi/bftools:/app/ilastikApi/bftools
+            - ./ilastikApi:/app/ilastikApi:rw
+            - ./docker_compose_shared/static:/app/shared_static:rw
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "./ilastikApi/start.sh" ]
+        restart: always   
+        networks:
+            - ias-network
+    front-app:
+        depends_on: 
+            - mainapi
+        build: 
+            context: ./react/
+            dockerfile: Dockerfile
+        expose: 
+            - "3000"
+        env_file:
+            - ./react/.env
+        restart: always
+        networks:
+            - ias-network
+    mongo:
+        image: mongo:latest
+        restart: always
+        ports:
+            - "127.0.0.1:27017:27017"
+        volumes:
+            - mongoDbData:/data/db
+        env_file:
+            - ./env_files/mongoDb.env
+        networks:
+            - ias-network
+    mongo-express:
+        image: mongo-express
+        restart: always
+        ports:
+            - "127.0.0.1:8081:8081"
+        env_file:
+            - ./env_files/mongo-express.env
+        depends_on:
+            - mongo
+        networks:
+            - ias-network
+    openldap:
+        image: bitnami/openldap:2
+        restart: always
+        ports:
+            - 192.168.1.100:389:1389
+            - 192.168.1.100:636:1636
+        environment:
+            - LDAP_ROOT=dc=life-analytics,dc=net
+            - LDAP_ADMIN_DN=cn=admin,dc=life-analytics,dc=net
+        env_file:
+            - ./env_files/fastApi.env
+        volumes:
+            - 'openldap_data:/bitnami/openldap'
+        networks:
+            - ias-network    
+    phpldapadmin:
+        image: laineil/phpldapadmin:1.2.6.6
+        restart: always
+        depends_on:
+            - openldap
+        ports:
+            - "127.0.0.1:4000:8080"
+        environment:
+            - LDAP_SERVER_HOST=openldap
+            - LDAP_CONN_PORT=1389
+        networks:
+            - ias-network
+    
+volumes:
+    openldap_data:    
+    mongoDbData:
+    image-storage:
+    cache-storage:
+    
+networks:
+  ias-network:
+    external: true

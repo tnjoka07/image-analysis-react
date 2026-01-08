@@ -1,0 +1,265 @@
+services:
+    proxy:
+        image: nginx:alpine
+        environment:
+            TZ: Asia/Tokyo
+        restart: always
+        ports: 
+            - 80:80
+        volumes:
+            - ./docker/nginx_dev:/etc/nginx/:rw
+        depends_on:
+            - front-app
+
+    # proxy:
+    #     image: haproxy:alpine
+    #     environment:
+    #         TZ: Asia/Tokyo
+    #     restart: always
+    #     ports: 
+    #         - "80:80"
+    #     volumes:
+    #         - ./proxy/haproxy:/usr/local/etc/haproxy/:rw
+    #     depends_on:
+    #         - front-app
+
+    mainapi:
+        build:
+            context: .
+            dockerfile: ./mainApi/Dockerfile
+        ports:
+            - 8000:8000
+            - 5700:5678 # debugging port
+        environment:
+            - ENVIRONMENT=development
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        depends_on:
+            - mongo
+        volumes:
+            - image-storage:/image-storage
+            - cache-storage:/cache-storage
+            - ~/.cache/huggingface:/root/.cache/huggingface:rw
+            - ./mainApi:/app/mainApi:rw
+            - ./docker_compose_shared/static:/app/shared_static:rw
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "./mainApi/start.sh" ]
+        restart: always
+    
+    deepliff:
+        build:
+            context: .
+            dockerfile: ./deepliff/Dockerfile
+        ports:
+            - 7000:7000
+            - 5600:5678 # debugging port
+        environment:
+            - ENVIRONMENT=development
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        depends_on:
+            - mongo
+        volumes:
+            - image-storage:/image-storage
+            - cache-storage:/cache-storage
+            - ./deepliff/app:/app:rw
+            - ./mainApi/app/static:/app/static:rw
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "/app/start.sh" ]
+        restart: always
+    
+    instanseg:
+        build:
+            context: .
+            dockerfile: ./instanseg/Dockerfile
+        ports:
+            - 2000:2000
+            - 5400:5678 # debugging port
+        environment:
+            - ENVIRONMENT=development
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        depends_on:
+            - mongo
+        volumes:
+            - image-storage:/image-storage
+            - cache-storage:/cache-storage
+            - ./instanseg/app:/app:rw
+            - ./mainApi/app/static:/app/static:rw
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "/app/start.sh" ]
+        restart: always
+    
+    blender:
+        build:
+            context: .
+            dockerfile: ./blender/Dockerfile
+        ports:
+            - 1235:8000
+            - 5350:5678 # debugging port
+        environment:
+            - ENVIRONMENT=development
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        depends_on:
+            - mongo
+        volumes:
+            - ./blender/app:/app:rw
+            - ./mainApi/bftools:/bftools
+            - ./mainApi/app/static:/app/static:rw
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "/app/start.sh" ]
+        restart: always
+    
+    tracker:
+        build:
+            context: .
+            dockerfile: ./tracker/Dockerfile
+        ports:
+            - 1236:8000
+            - 5352:5678 # debugging port
+        environment:
+            - ENVIRONMENT=development
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        depends_on:
+            - mongo
+        volumes:
+            - ./tracker/app:/app:rw
+            - ./mainApi/bftools:/bftools
+            - ./mainApi/app/static:/app/static:rw
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "/app/start.sh" ]
+        restart: always
+
+    denoise:
+        build:
+            context: .
+            dockerfile: ./denoise/Dockerfile
+        ports:
+            - 2222:8000
+            - 5360:5678 # debugging port
+        environment:
+            - ENVIRONMENT=development
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        depends_on:
+            - mongo
+        volumes:
+            - ./denoise/app:/app:rw
+            - ./mainApi/bftools:/bftools
+            - ./mainApi/app/static:/app/static:rw
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "/app/start.sh" ]
+        restart: always
+
+    cflowad:
+        build:
+            context: .
+            dockerfile: ./cflowAD/Dockerfile
+        ports:
+            - 1000:1000
+            - 5300:5678 # debugging port
+        environment:
+            - ENVIRONMENT=development
+        env_file:
+            - ./env_files/fastApi.env
+            - ./env_files/mongoDB_connect.env
+        depends_on:
+            - mongo
+        volumes:
+            - ./cflowAD/app:/app:rw
+            - ./mainApi/app/static:/app/static:rw
+            - ./mainApi/bftools:/bftools
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "/app/start.sh" ]
+        restart: always
+
+    ilastikapi:
+        build:
+            context: .
+            dockerfile: ./ilastikApi/Dockerfile
+        ports:
+            - 8001:8001
+        env_file:
+            - ./env_files/fastApi.env
+        environment:
+            - ENVIRONMENT=development
+        volumes:
+            - image-storage:/image-storage
+            - cache-storage:/cache-storage
+            - ./ilastikApi:/app/ilastikApi:rw
+            - ./mainApi/bftools:/app/ilastikApi/bftools
+            - ./docker_compose_shared/static:/app/shared_static:rw
+            - ./letsencrypt:/etc/letsencrypt
+        command: [ "sh", "./ilastikApi/start.sh" ]
+        restart: always   
+
+    front-app:
+        depends_on: 
+            - mainapi
+        build: 
+            context: ./react/
+            dockerfile: Dockerfile.dev
+        volumes:
+            - ./react:/app:rw
+        ports: 
+            - 3000:80
+        env_file:
+            - ./react/.env
+        restart: always
+    
+    openldap:
+        image: bitnami/openldap:2
+        restart: always
+        ports:
+            - 389:1389
+            - 636:1636
+        environment:
+            - LDAP_ROOT=dc=life-analytics,dc=net
+            - LDAP_ADMIN_DN=cn=admin,dc=life-analytics,dc=net
+        env_file:
+            - ./env_files/fastApi.env
+        volumes:
+            - 'openldap_data:/bitnami/openldap'
+    
+    phpldapadmin:
+        image: laineil/phpldapadmin:1.2.6.6
+        depends_on:
+            - openldap
+        ports:
+            - "4000:8080"
+        environment:
+            - LDAP_SERVER_HOST=openldap
+            - LDAP_CONN_PORT=1389
+        
+    mongo:
+        image: mongo:latest
+        restart: always
+        ports:
+            - "27017:27017"
+        volumes:
+            - mongoDbData:/data/db
+        env_file:
+            - ./env_files/mongoDb.env
+    
+    mongo-express:
+        image: mongo-express
+        ports:
+            - 8081:8081
+        env_file:
+            - ./env_files/mongo-express.env
+        depends_on:
+            - mongo
+
+volumes:
+    openldap_data:
+    mongoDbData:
+    image-storage:
+    cache-storage:
